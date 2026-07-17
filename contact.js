@@ -31,6 +31,15 @@ const contactSchema = new mongoose.Schema({
 
 const Contact = mongoose.model("Contact", contactSchema);
 
+router.get("/quotes",(req,res)=>{
+  try{
+    const contacts=await Contact.find();
+    res.status(200).json({contacts});
+  }catch(error){
+    res.status(500).json({message:"Failed to fetch contacts",error});
+  }
+});
+
 router.post("/contact/submit", async (req, res) => {
   try {
     const { fullName, email, phone, projectType, message } = req.body;

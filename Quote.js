@@ -42,6 +42,15 @@ const quoteSchema = new mongoose.Schema({
 
 const Quote = mongoose.model("Quote", quoteSchema);
 
+router.get("/quotes", async (req, res) => {
+  try {
+    const quotes = await Quote.find();
+    res.status(200).json({ quotes });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching Quotes", error });
+  }
+});
+
 router.post("/Quote/submit", async (req, res) => {
   try {
     const {
