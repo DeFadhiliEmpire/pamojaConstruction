@@ -31,12 +31,12 @@ const contactSchema = new mongoose.Schema({
 
 const Contact = mongoose.model("Contact", contactSchema);
 
-router.get("/contacts",(req,res)=>{
-  try{
-    const contacts=await Contact.find();
-    res.status(200).json({contacts});
-  }catch(error){
-    res.status(500).json({message:"Failed to fetch contacts",error});
+router.get("/contacts", async (req, res) => {
+  try {
+    const contacts = await Contact.find();
+    res.status(200).json({ contacts });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch contacts", error });
   }
 });
 
