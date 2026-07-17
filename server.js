@@ -18,7 +18,7 @@ const options = {
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://192.168.100.7:5173"],
+    origin: ["http://localhost:5173", "http://192.168.100.7:5173","https://pamojaconstruction-pjsp.onrender.com"],
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
