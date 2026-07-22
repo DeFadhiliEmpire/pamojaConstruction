@@ -10,6 +10,7 @@ const app = express();
 
 const { router: quoteRouter } = require("./Quote");
 const { router: contactRouter } = require("./contact");
+const { router: projectsRouter } = requite("./projects");
 
 const options = {
   key: fs.readFileSync("./localhost+1-key.pem"),
@@ -18,7 +19,11 @@ const options = {
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://192.168.100.7:5173","https://pamojaconstruction-pjsp.onrender.com"],
+    origin: [
+      "http://localhost:5173",
+      "http://192.168.100.7:5173",
+      "https://pamojaconstruction-pjsp.onrender.com",
+    ],
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
@@ -27,6 +32,7 @@ app.use(
 app.use(express.json());
 app.use(quoteRouter);
 app.use(contactRouter);
+app.use(projectsRouter);
 
 app.get("/home", (req, res) => {
   res.send("server is on");
