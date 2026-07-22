@@ -10,7 +10,7 @@ const app = express();
 
 const { router: quoteRouter } = require("./Quote");
 const { router: contactRouter } = require("./contact");
-const { router: projectsRouter } = requite("./projects");
+const { router: projectsRouter } = require("./projects");
 
 const options = {
   key: fs.readFileSync("./localhost+1-key.pem"),
