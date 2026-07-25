@@ -24,7 +24,7 @@ app.use(
       "http://192.168.100.7:5173",
       "https://pamojaconstruction-pjsp.onrender.com",
     ],
-    methods: ["GET", "POST", "OPTIONS"],
+    methods: ["GET", "POST", "OPTIONS", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
