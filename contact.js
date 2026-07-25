@@ -7,7 +7,7 @@ const router = express.Router();
 
 const CONTACT_STATUS = {
   PENDING: "pending",
-  ACCEPTED: "accepted",
+  RESOLVED: "Resolved",
   REJECTED: "rejected",
 };
 
@@ -91,6 +91,40 @@ router.post("/contact/submit", async (req, res) => {
       message: "An error occurred while processing your  contact request",
       error: error.message,
     });
+  }
+});
+
+router.patch("/contacts/:id/resolve", async (req, res) => {
+  try {
+    const contact = await Contact.findById(req.params.id);
+    if (!contact) return res.status(404).json({ error: "Contact Not Found" });
+    if (contact.status !== "pending")
+      return res
+        .status(400)
+        .json({ error: "A contact must be pending to be verified." });
+
+    //update the status to resolved
+    contact.status = "Resolved";
+    await contact.save();
+
+    res.json({ message: "Contact succesfully Resolved." });
+  } catch (err) {
+    console.error("Resolve contact error", err);
+    res.status(500).json({ error: "Internal server Error 123" });
+  }
+});
+
+router.delete("/contacts/:id", async (req, res) => {
+  try {
+    const contact = await Contact.findByIdAndDelete(req.params.id);
+    if (!contact)
+      return res
+        .status(400)
+        .json({ message: "Cannot delete unexisting contact" });
+    res.status(200).json({ message: "Contact Deleted" });
+  } catch (err) {
+    console.error("Delete contact error", err);
+    res.status(500).json({ error: "Internal server Error" });
   }
 });
 
