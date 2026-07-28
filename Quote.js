@@ -7,8 +7,9 @@ const router = express.Router();
 
 const QUOTE_STATUS = {
   PENDING: "pending",
-  ACCEPTED: "accepted",
-  REJECTED: "rejected",
+  ACCEPTED: "active",
+  REJECTED: "terminated",
+  COMPLETED: "completed",
 };
 
 const quoteSchema = new mongoose.Schema({
@@ -48,6 +49,41 @@ router.get("/quotes", async (req, res) => {
     res.status(200).json({ quotes });
   } catch (error) {
     res.status(500).json({ message: "Error fetching Quotes", error });
+  }
+});
+
+router.patch("/Quote/:id/review", async (req, res) => {
+  try {
+    const decision = req.body.decision?.toLowerCase();
+    if (
+      !decision ||
+      !["accepted", "rejected", "completed"].includes(decision)
+    ) {
+      return res
+        .status(400)
+        .json({ error: 'decision must be "accepted" ,"rejected","completed' });
+    }
+
+    const quote = await Quote.findById(req.params.id);
+    if (!quote) return res.status(404).json({ error: "Quote not Found" });
+    if (quote.status !== "pending")
+      return res.status(400).json({
+        error: "A quote must be pending to be accepted or rejecting.",
+      });
+
+    if (decision === "accepted") {
+      quote.status = "active";
+    } else if (decision === "rejected") {
+      quote.status = "terminated";
+    } else {
+      quote.status = "completed";
+    }
+
+    await quote.save();
+    res.json({ message: `Quote ${decision}` });
+  } catch (err) {
+    console.error("Quote Review Error ", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
