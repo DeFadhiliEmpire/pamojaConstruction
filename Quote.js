@@ -52,7 +52,7 @@ router.get("/quotes", async (req, res) => {
   }
 });
 
-router.patch("/Quote/:id/review", async (req, res) => {
+router.patch("/quotes/:id/review", async (req, res) => {
   try {
     const decision = req.body.decision?.toLowerCase();
     if (
