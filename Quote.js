@@ -85,6 +85,7 @@ router.patch("/quotes/:id/project", async (req, res) => {
       category: quote.projectType,
       projectAddress: quote.projectAddress,
       description: quote.moreAbout,
+      completionDate: new Date(),
       status: "active",
     });
     await project.save();
