@@ -24,11 +24,11 @@ const projectSchema = new mongoose.Schema(
     projectTitle: { type: String, required: true },
     category: { type: String, required: true },
     projectAddress: { type: String, required: true },
-    completionDate: { type: Date, required: true },
+    completionDate: { type: Date },
     description: { type: String, required: true },
     status: {
       type: String,
-      enum: ["completed", "terminated"],
+      enum: ["active", "completed", "terminated"],
     },
     image: {
       data: { type: Buffer },
