@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const express = require("express");
 const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);
+const { Project } = require("./projects");
 
 const router = express.Router();
 
