@@ -26,6 +26,10 @@ const projectSchema = new mongoose.Schema(
     projectAddress: { type: String, required: true },
     completionDate: { type: Date, required: true },
     description: { type: String, required: true },
+    status: {
+      type: String,
+      enum: ["completed", "terminated"],
+    },
     image: {
       data: { type: Buffer },
       contentType: { type: String },
@@ -74,6 +78,31 @@ router.post("/project/add", upload.single("image"), async (req, res) => {
       return res.status(400).json({ error: err.message });
     console.error("Project Creation Error:", err);
     res.status(500).json({ error: "Internall server Error" });
+  }
+});
+
+router.patch("/projects/:id/status", async (req, res) => {
+  try {
+    const decision = req.body.decision?.toLowerCase();
+    if (!decision || !["completed", "terminated"].includes(decision)) {
+      return res
+        .status(400)
+        .json({ error: 'decision must be "completed" or "terminated"' });
+    }
+    const project = await Project.findById(req.params.id);
+
+    if (!project) return res.status(404).json({ error: "Project not Found" });
+
+    project.status = decision === "completed" ? "completed" : "terminated";
+    if (decision === "completed") {
+      project.completionDate = new Date();
+    }
+
+    await project.save();
+    res.json({ message: `Project ${decision}`, project });
+  } catch (err) {
+    console.error("Project Status Update Error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

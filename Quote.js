@@ -7,9 +7,8 @@ const router = express.Router();
 
 const QUOTE_STATUS = {
   PENDING: "pending",
-  ACCEPTED: "active",
-  REJECTED: "terminated",
-  COMPLETED: "completed",
+  RESOLVE: "resolved",
+  PROCEED: "proceeded",
 };
 
 const quoteSchema = new mongoose.Schema({
@@ -52,38 +51,48 @@ router.get("/quotes", async (req, res) => {
   }
 });
 
-router.patch("/quotes/:id/review", async (req, res) => {
+router.patch("/quotes/:id/resolve", async (req, res) => {
   try {
-    const decision = req.body.decision?.toLowerCase();
-    if (
-      !decision ||
-      !["accepted", "rejected", "completed"].includes(decision)
-    ) {
-      return res
-        .status(400)
-        .json({ error: 'decision must be "accepted" ,"rejected","completed' });
-    }
-
     const quote = await Quote.findById(req.params.id);
+
     if (!quote) return res.status(404).json({ error: "Quote not Found" });
     if (quote.status !== "pending")
       return res.status(400).json({
-        error: "A quote must be pending to be accepted or rejecting.",
+        error: "A quote must be pending to resolve  or proceed to project.",
       });
 
-    if (decision === "accepted") {
-      quote.status = "active";
-    } else if (decision === "rejected") {
-      quote.status = "terminated";
-    } else {
-      quote.status = "completed";
-    }
+    quote.status = QUOTE_STATUS.RESOLVE;
 
     await quote.save();
-    res.json({ message: `Quote ${decision}` });
+    res.json({ message: "Quote resolved successfully", quote });
   } catch (err) {
     console.error("Quote Review Error ", err);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: "Internal Server Error in quote review" });
+  }
+});
+
+//Convert Quote to project if status is proceeded
+router.post("/quotes/:id/project", async (req, res) => {
+  try {
+    const quote = await Quote.findById(req.params.id);
+    if (!quote) return res.status(404).json({ error: "Quote not found" });
+
+    quote.status = QUOTE_STATUS.PROCEED;
+    await quote.save();
+
+    const project = new Project({
+      projectTitle: quote.projectType,
+      category: quote.projectType,
+      projectAddress: quote.projectAddress,
+      description: quote.moreAbout,
+      status: "active",
+    });
+    await project.save();
+
+    res.status(201).json({ message: "Project created from quote", project });
+  } catch (err) {
+    console.error("Error creating project from quote:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
