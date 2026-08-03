@@ -89,7 +89,9 @@ router.patch("/quotes/:id/project", async (req, res) => {
     });
     await project.save();
 
-    res.status(201).json({ message: "Project created from quote", project });
+    res
+      .status(201)
+      .json({ message: "Project created from quote", quote, project });
   } catch (err) {
     console.error("Error creating project from quote:", err);
     res.status(500).json({ error: "Internal server error" });
