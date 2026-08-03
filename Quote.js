@@ -72,7 +72,7 @@ router.patch("/quotes/:id/resolve", async (req, res) => {
 });
 
 //Convert Quote to project if status is proceeded
-router.post("/quotes/:id/project", async (req, res) => {
+router.patch("/quotes/:id/project", async (req, res) => {
   try {
     const quote = await Quote.findById(req.params.id);
     if (!quote) return res.status(404).json({ error: "Quote not found" });
