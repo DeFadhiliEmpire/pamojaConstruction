@@ -84,7 +84,7 @@ router.patch("/quotes/:id/project", async (req, res) => {
     const project = new Project({
       projectTitle: quote.projectType,
       category: quote.projectType,
-      projectAddress: quote.projectAddress,
+      projectAddress: quote.projectAdress,
       description: quote.moreAbout,
 
       status: "active",
