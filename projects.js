@@ -108,7 +108,7 @@ router.patch("/projects/:id/status", async (req, res) => {
 
 router.get("/projects", async (req, res) => {
   try {
-    const projects = await Projects.find();
+    const projects = await Project.find();
     res.status(200).json({ projects });
   } catch (err) {
     res.status(500).json({ error: "Error fetching projects", err });
