@@ -71,7 +71,7 @@ router.post("/project/add", upload.single("image"), async (req, res) => {
     await project.save();
     res.status(201).json({
       message: "New Project created successfully ",
-      projectId: project._id,
+      project,
     });
   } catch (err) {
     if (err instanceof multer.MulterError || err.message?.includes("image"))
