@@ -115,4 +115,18 @@ router.get("/projects", async (req, res) => {
   }
 });
 
+//fetching the image
+router.get("/projects/:id/image", async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+    res.set("Content-Type", project.image.contentType);
+    res.send(project.image.data);
+  } catch (err) {
+    res.status(500).json({ error: "Error fetching project image", err });
+  }
+});
+
 module.exports = { router, Project };
