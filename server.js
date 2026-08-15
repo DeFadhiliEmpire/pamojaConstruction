@@ -11,6 +11,7 @@ const app = express();
 const { router: quoteRouter } = require("./Quote");
 const { router: contactRouter } = require("./contact");
 const { router: projectsRouter } = require("./projects");
+const { router: authRouter } = require("./auth");
 
 const options = {
   key: fs.readFileSync("./localhost+1-key.pem"),
@@ -26,6 +27,8 @@ app.use(
     ],
     methods: ["GET", "POST", "OPTIONS", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
+
+    credentials: true,
   }),
 );
 
@@ -33,6 +36,7 @@ app.use(express.json());
 app.use(quoteRouter);
 app.use(contactRouter);
 app.use(projectsRouter);
+app.use(authRouter);
 
 app.get("/home", (req, res) => {
   res.send("server is on");
