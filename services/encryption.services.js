@@ -24,7 +24,7 @@ function encrypt(text) {
     iv.toString("hex"),
     authTag.toString("hex"),
     encrypted.toString("hex"),
-  ].joi(":");
+  ].join(":");
 }
 
 function decrypt(payload) {

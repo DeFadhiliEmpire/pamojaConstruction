@@ -146,7 +146,7 @@ router.post("/auth/login", async (req, res) => {
     }
 
     const challenge = jwt.sign(
-      { userId: user._id.toString(), type: "mfa_challange" },
+      { userId: user._id.toString(), type: "mfa_challenge" },
       process.env.JWT_SECRET,
       { expiresIn: "5m" },
     );
@@ -171,19 +171,21 @@ router.post("/auth/verify-login-mfa", async (req, res) => {
       return res
         .status(400)
         .json({ message: "MFA challange and token are required" });
+    }
 
-      try {
-        const decoded = jwt.verify(challenge, process.env.JWT_SECRET);
-      } catch (err) {
-        console.error(err);
-        return res
-          .status(401)
-          .json({ message: "MFA challenge expired or invalid" });
-      }
+    let decoded;
 
-      if (decoded.type !== "mfa_challenge") {
-        return res.status(401).json({ message: "Inalid MFA challange" });
-      }
+    try {
+      decoded = jwt.verify(challenge, process.env.JWT_SECRET);
+    } catch (err) {
+      console.error(err);
+      return res
+        .status(401)
+        .json({ message: "MFA challenge expired or invalid" });
+    }
+
+    if (decoded.type !== "mfa_challenge") {
+      return res.status(401).json({ message: "Inalid MFA challange" });
     }
 
     const user = await User.findById(decoded.userId).select(
@@ -208,8 +210,9 @@ router.post("/auth/verify-login-mfa", async (req, res) => {
     await user.save();
 
     const accessToken = createAccessToken(user);
+    const refreshToken = await createRefreshToken(user);
 
-    res.json({ message: "Login successful", acessToken, refreshToken });
+    res.json({ message: "Login successful", accessToken, refreshToken });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "MFA authentication failed" });
@@ -244,7 +247,7 @@ router.post("/auth/refresh-token", async (req, res) => {
       return res.status(401).json({ message: "Refresh token expired " });
     }
 
-    const user = await user.findById(storedToken.userId);
+    const user = await User.findById(storedToken.userId);
 
     if (!user) {
       return res
@@ -335,6 +338,7 @@ passport.use(
 router.get(
   "/auth/google/callback",
   passport.authenticate("google", {
+    scope: ["profile", "email"],
     failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_auth_failed`,
   }),
   async (req, res) => {
@@ -372,7 +376,7 @@ router.get(
   },
 );
 
-router.post("/google/setup-mfa", async (req, res) => {
+router.post("/auth/google/setup-mfa", async (req, res) => {
   try {
     const { userId } = req.body;
 
@@ -407,88 +411,3 @@ router.post("/google/setup-mfa", async (req, res) => {
 });
 
 module.exports = { router };
-
-/*
-//configure session for OAuth 2.0
-router.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      sameSite: "lax",
-    },
-  }),
-);
-
-//Initialize Passport
-router.use(passport.initialize());
-router.use(passport.session());
-
-//configure Google OAuth 2.0 strategy
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: clientId,
-      clientSecret: clientSecret,
-      callbackURL,
-    },
-    async (acessToken, refreshToken, profile, done) => {
-      try {
-        const email = profile.emails?.[0]?.value;
-
-        if (!email) {
-          return done(null, false);
-        }
-
-        let user = await User.findOne({ email });
-
-        if (!user) {
-          const user = new User({
-            email,
-            fullName: profile.displayName,
-            oauthProvider: "google",
-            oauthId: profile.id,
-            isMfaEnabled: false,
-          });
-
-          await user.save();
-        }
-
-        return done(null, user);
-      } catch (err) {
-        return done(err, null);
-      }
-    },
-  ),
-);
-
-//serialize user for session
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-
-//Deserialize user from session
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await User.findById(id);
-    done(null, user);
-  } catch (err) {
-    done(err, null);
-  }
-});
-
-router.get(
-  "/auth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] }),
-);
-
-router.get(
-  "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/login" }),
-  (req, res) => {
-    res.json({ message: "Google Login successful, please enter MFA code" });
-  },
-); */
