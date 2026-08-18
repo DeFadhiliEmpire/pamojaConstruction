@@ -299,9 +299,9 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: process.env.GOOGLE_CALLBACK_URL,
     },
-    async (accessToken, refreshToken, Profile, done) => {
+    async (accessToken, refreshToken, profile, done) => {
       try {
-        const email = Profile.emails?.[0]?.value?.toLowerCase();
+        const email = profile.emails?.[0]?.value?.toLowerCase();
 
         if (!email) {
           return done(null, false, { message: "Google account has no email" });
@@ -352,61 +352,94 @@ router.get(
       }
 
       if (!user.isMfaEnabled) {
-        return res.redirect(
-          `${process.env.FRONTEND_URL}/mfa/setup?userId=${user._id}`,
-        );
+        const secret = generateSecret(user.email);
+        user.mfaSecretEncrypted = encrypt(secret.base32);
+
+        await user.save();
+
+        const qrCode = await generateQRCode(secret.otpauth_url);
+
+        return res.json({
+          mfaRequired: true,
+          setup: true,
+          userId: user._id,
+          qrCode,
+          message:
+            "You must enable MFA. Download an Authenticator app and scan this QR code.",
+        });
       }
 
+      //if MFA enabled return challange token
       const challenge = jwt.sign(
         { userId: user._id.toString(), type: "mfa_challenge" },
         process.env.JWT_SECRET,
         { expiresIn: "5m" },
       );
 
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/mfa/verify?challenge=${encodeURIComponent(challenge)}`,
-      );
+      return res.json({ mfaRequired: true, setup: false, challenge });
     } catch (err) {
       console.error(err);
 
       return res.redirect(
-        `${process.env.FRONTEND_URL}/login?error=server_error`,
+        `${process.env.FRONTEND_URL}/Login?error=server_error`,
       );
     }
   },
 );
 
-router.post("/auth/google/setup-mfa", async (req, res) => {
+router.post("/auth/google/verify-mfa", async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { challenge, token } = req.body;
 
-    const user = await User.findById(userId);
+    if (!challenge || !token) {
+      return res
+        .status(400)
+        .json({ message: "MFA challange and token are required 12" });
+    }
+
+    let decoded;
+
+    try {
+      decoded = jwt.verify(challenge, process.env.JWT_SECRET);
+    } catch (err) {
+      console.error(err);
+      return res
+        .status(401)
+        .json({ message: "MFA challenge expired or invalid in google verify" });
+    }
+
+    if (decoded.type !== "mfa_challenge") {
+      return res.status(401).json({ message: "Inalid MFA challange" });
+    }
+
+    const user = await User.findById(decoded.userId).select(
+      "+mfaSecretEncrypted",
+    );
 
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "User not found in google Mfa-setup" });
+      return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.isMfaEnabled) {
-      return res.status(400).json({ message: "MFA already enabled" });
+    if (!user.isMfaEnabled) {
+      return res.status(403).json({ message: "MFA is not enabled" });
     }
 
-    const secret = generateSecret(user.email);
+    const valid = verifyToken(user.mfaSecretEncrypted, token);
 
-    user.mfaSecretEncrypted = encrypt(secret.base32);
+    if (!valid) {
+      return res.status(401).json({ message: "Invalid MFA code" });
+    }
 
+    user.lastLogin = new Date();
     await user.save();
 
-    const qrCode = await generateQRCode(secret.otpauth_url);
+    const accessToken = createAccessToken(user);
+    const refreshToken = await createRefreshToken(user);
 
-    res.json({ qrCode });
+    res.json({ message: "Login successful", accessToken, refreshToken });
   } catch (err) {
-    console.error(err);
-
-    res
-      .status(500)
-      .json({ message: "Failed to create MFA setup in google enrollment" });
+    console.error("Login error:", err);
+    res.status(500).json({ error: "MFA authentication failed" });
   }
 });
 
