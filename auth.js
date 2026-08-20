@@ -366,7 +366,13 @@ router.get(
           qrCode,
           message:
             "You must enable MFA. Download an Authenticator app and scan this QR code.",
-        });
+        }).send(`
+          <script>
+            localStorage.setItem("qrCode", "${qrCode}");
+            localStorage.setItem("userId", "${user._id}");
+            window.location.href = "${process.env.FRONTEND_URL}/login";
+          </script>
+        `);
       }
 
       //if MFA enabled return challange token
@@ -376,7 +382,12 @@ router.get(
         { expiresIn: "5m" },
       );
 
-      return res.json({ mfaRequired: true, setup: false, challenge });
+      return res.json({ mfaRequired: true, setup: false, challenge }).send(`
+        <script>
+          localStorage.setItem("challenge", "${challenge}");
+          window.location.href = "${process.env.FRONTEND_URL}/login";
+        </script>
+      `);
     } catch (err) {
       console.error(err);
 
