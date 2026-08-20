@@ -359,14 +359,7 @@ router.get(
 
         const qrCode = await generateQRCode(secret.otpauth_url);
 
-        return res.json({
-          mfaRequired: true,
-          setup: true,
-          userId: user._id,
-          qrCode,
-          message:
-            "You must enable MFA. Download an Authenticator app and scan this QR code.",
-        }).send(`
+        return res.send(`
           <script>
             localStorage.setItem("qrCode", "${qrCode}");
             localStorage.setItem("userId", "${user._id}");
@@ -382,7 +375,7 @@ router.get(
         { expiresIn: "5m" },
       );
 
-      return res.json({ mfaRequired: true, setup: false, challenge }).send(`
+      return res.send(`
         <script>
           localStorage.setItem("challenge", "${challenge}");
           window.location.href = "${process.env.FRONTEND_URL}/login";
