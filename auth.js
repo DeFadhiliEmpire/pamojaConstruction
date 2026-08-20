@@ -336,9 +336,14 @@ passport.use(
 );
 
 router.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] }),
+);
+
+router.get(
   "/auth/google/callback",
   passport.authenticate("google", {
-    scope: ["profile", "email"],
+    session: false,
     failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_auth_failed`,
   }),
   async (req, res) => {
