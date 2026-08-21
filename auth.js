@@ -342,6 +342,10 @@ router.get(
 
 router.get(
   "/auth/google/callback",
+  (req, res, next) => {
+    console.log("Query params:", req.query);
+    next();
+  },
   passport.authenticate("google", {
     session: false,
     failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_auth_failed`,
